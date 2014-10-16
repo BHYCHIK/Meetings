@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+Hello, <b>{{ login }}</b><br>
+<a href="logout/">logout</a><br>
+<div>
+Your apps:
+<table>
+<td>Имя приложения</td>
+<td>ID приложения</td>
+<td>Секретный код</td>
+{% for app in apps%}
+    <tr>
+    <td>{{ app.application_name }}</td>
+    <td>{{  app.application_id }}</td>
+    <td>{{ app.application_secret }}</td>
+    </tr>
+{% endfor %}
+</table>
+<br>
+<form method="POST" action=".">
+    {% csrf_token %}
+    Имя приложения: <input type="text" name="appname"><br>
+    <input type="submit"><br>
+</form>
+</body>
+</html>

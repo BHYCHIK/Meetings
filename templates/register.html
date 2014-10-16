@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+<body>
+Please register
+<form method="post" action=".">
+    {% csrf_token %}
+    login: <input type="text" name="login"><br>
+    password: <input type="text" name="password"><br>
+    age: <input type="text" name="age"><br>
+    <input type="submit">
+</form>
+</body>
+</html>
