@@ -9,8 +9,11 @@ Please register
 <form method="post" action=".">
     {% csrf_token %}
     login: <input type="text" name="login"><br>
-    password: <input type="text" name="password"><br>
-    age: <input type="text" name="age"><br>
+    password: <input type="password" name="password"><br>
+    name: <input type="text" name="name"><br>
+    email: <input type="email" name="email"><br>
+    age: <input type="number" name="age"><br>
+    phone: <input type="tel" name="phone"><br>
     <input type="submit">
 </form>
 </body>

@@ -8,6 +8,9 @@ class User(models.Model):
     login = models.CharField(max_length=64, verbose_name="Логин", unique=True)
     password = models.CharField(max_length=32, verbose_name="Хэш пароля")
     age = models.PositiveSmallIntegerField()
+    phone = models.CharField(max_length=32)
+    email = models.EmailField(max_length=96, unique=True)
+    name = models.CharField(max_length=128)
 
 class ClientApplication(models.Model):
     class Meta():

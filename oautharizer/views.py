@@ -137,6 +137,9 @@ def register(request):
         new_user.login = request.POST.get('login')
         new_user.password = hashlib.md5(request.POST.get('password')).hexdigest()
         new_user.age = request.POST.get('age')
+        new_user.phone = request.POST.get('phone')
+        new_user.email = request.POST.get('email')
+        new_user.name = request.POST.get('name')
         try:
             new_user.save()
         except IntegrityError, e:
