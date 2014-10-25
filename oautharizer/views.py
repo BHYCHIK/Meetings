@@ -3,17 +3,69 @@ from django.core.context_processors import csrf
 from django.db import IntegrityError
 from django.http.response import Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import ObjectDoesNotExist
 import hashlib
 import models
 import random
 import string
 import json
-from django.core.exceptions import ObjectDoesNotExist
+import config
+import time
 
 # Create your views here.
 
 
-@csrf_exempt
+def json_result_decorator(view_func):
+    def wrapper(request):
+        print 'json_result_decorator'
+        result = view_func(request)
+        result['Content-Type'] = 'application/json;charset=UTF-8'
+        return result
+    return wrapper
+
+
+def no_cache_decorator(view_func):
+    def wrapper(request):
+        print 'no_cache_decorator'
+        result = view_func(request)
+        result['Cache-Control'] = 'no-store'
+        result['Pragma'] = 'no-cache'
+        return result
+    return wrapper
+
+
+def token_checker_decorator(view_func):
+    print 'no_cache_decorator'
+    @no_cache_decorator
+    @json_result_decorator
+    def wrapper(request):
+        reply = dict()
+        if 'access_token' not in request.GET:
+            reply['error_code'] = 3
+            reply['error_description'] = 'Access denied'
+            return HttpResponse(json.dumps(reply))
+
+        access_obj = models.ActiveTokens.objects.filter(access_token=request.GET['access_token'])
+
+        if access_obj.count() != 1:
+            reply['error_code'] = 3
+            reply['error_description'] = 'Access denied'
+            return HttpResponse(json.dumps(reply))
+
+        dif_time = int(time.time()) - time.mktime(access_obj[0].creation_time.timetuple())
+        if dif_time < 0:
+            print "STRANGE THING HAPPEND"
+            raise Http404
+        if dif_time > config.token_expire_time:
+            reply['error_code'] = 3
+            reply['error_description'] = 'Access denied'
+            return HttpResponse(json.dumps(reply))
+
+        return view_func(request, access_obj)
+
+    return wrapper
+
+@json_result_decorator
 def get_stats(request):
     reply = dict()
     reply['total_users'] = models.User.objects.all().count()
@@ -22,27 +74,15 @@ def get_stats(request):
     return HttpResponse(json.dumps(reply))
 
 
-@csrf_exempt
-def about_me(request):
+@json_result_decorator
+@token_checker_decorator
+def about_me(request, access_obj=None):
     reply = dict()
-    if 'access_token' not in request.GET:
-        reply['error_code'] = 3
-        reply['error_description'] = 'Access denied'
-        return HttpResponse(json.dumps(reply))
-
-    access_obj = models.ActiveTokens.objects.filter(access_token=request.GET['access_token'])
-
-    if access_obj.count() != 1:
-        reply['error_code'] = 3
-        reply['error_description'] = 'Access denied'
-        return HttpResponse(json.dumps(reply))
-
     reply['id'] = access_obj[0].user.pk
     reply['name'] = access_obj[0].user.name
     reply['phone'] = access_obj[0].user.phone
     reply['login'] = access_obj[0].user.login
     reply['age'] = access_obj[0].user.age
-
     return HttpResponse(json.dumps(reply))
 
 
@@ -57,6 +97,8 @@ def _gen_rnd_str(length):
 
 
 @csrf_exempt
+@json_result_decorator
+@no_cache_decorator
 def oauth_client_step(request):
     client_id = request.POST.get('client_id')
     client_secret = request.POST.get('client_secret')
@@ -88,16 +130,31 @@ def oauth_client_step(request):
         reply['error_description'] = 'No such code'
         return HttpResponse(json.dumps(reply))
 
+    db_req = db_req[0]
+
+    dif_time = int(time.time()) - time.mktime(db_req.creation_time.timetuple())
+    if dif_time < 0:
+        print "STRANGE THING HAPPEND"
+        raise Http404
+
+    if dif_time > config.code_valid_time:
+        reply['error_code'] = 3
+        reply['error_description'] = 'No such code'
+        return HttpResponse(json.dumps(reply))
+
     access_token_obj = models.ActiveTokens()
     access_token_obj.access_token = _gen_rnd_str(64)
-    access_token_obj.user = db_req[0].user
+    access_token_obj.user = db_req.user
     access_token_obj.save()
 
-    db_req[0].delete()
+    db_req.delete()
 
     reply['access_token'] = access_token_obj.access_token
+    reply['token_type'] = 'bearer'
+    reply['expires_in'] = config.token_expire_time
     reply['user_id'] = access_token_obj.user.id
-    return HttpResponse(json.dumps(reply))
+    response_object = HttpResponse(json.dumps(reply))
+    return response_object
 
 
 #?client_id=CLIENT-ID&redirect_uri=REDIRECT-URI&response_type=code

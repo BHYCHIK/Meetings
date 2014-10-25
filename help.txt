@@ -1,5 +1,5 @@
 login: i.remen
-pass: 123123a
+pass: 123123q
 
 Имя приложения	ID приложения	Секретный код
 MySecondApp	2	aawah8qtm19p1rrahi550dhj31305dza
@@ -12,7 +12,7 @@ curl \-F 'client_id=2' \
     -F 'client_secret=aawah8qtm19p1rrahi550dhj31305dza' \
     -F 'grant_type=authorization_code' \
     -F 'redirect_uri=http://ya.ru' \
-    -F 'code=6' http://127.0.0.1:8000/oautharizer/api/access_token/
+    -F 'code=6' http://127.0.0.1:8000/oautharizer/api/access_token/ -v
 
 access_token = 8o4baqygaax4ksw161ox2x2d9jvvteti79fti24mn1zojjw92j9avkj0xz16mi2x
 
