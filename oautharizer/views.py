@@ -1,6 +1,6 @@
 from django.shortcuts import render, render_to_response, redirect
 from django.core.context_processors import csrf
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.http.response import Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import hashlib
@@ -8,6 +8,7 @@ import models
 import random
 import string
 import json
+from django.core.exceptions import ObjectDoesNotExist
 
 # Create your views here.
 
@@ -100,32 +101,69 @@ def oauth_client_step(request):
 
 
 #?client_id=CLIENT-ID&redirect_uri=REDIRECT-URI&response_type=code
-@csrf_exempt
 def oauth_owner_step(request):
     client_id = request.GET.get('client_id')
     redirect_uri = request.GET.get('redirect_uri')
     response_type = request.GET.get('response_type')
+    user = None
     if (client_id is None) or (redirect_uri is None) or (response_type is None) or (response_type != 'code'):
         raise Http404
-    if request.POST:
+    if request.POST and ('login' in request.POST):
         user = models.User.objects.filter(login=request.POST.get('login'),
                                           password=hashlib.md5(request.POST.get('password')).hexdigest())
         if user.count() != 1:
             return render_to_response('loginerr.html')
-        request.session['user_id'] = user[0].pk
+        user = user[0]
+        request.session['user_id'] = user.pk
+
+    application = None
+    try:
+        application = models.ClientApplication.objects.get(pk=client_id)
+    except ObjectDoesNotExist:
+        raise Http404
+
     if 'user_id' not in request.session:
         ctx = {}
         ctx.update(csrf(request))
-        ctx['redirect_path'] = '?client_id={0}&redirect_uri={1}&response_type=code'.format(client_id, redirect_uri)
+        ctx['redirect_path'] = \
+            '?client_id={0}&redirect_uri={1}&response_type=code{2}{3}'.\
+            format(client_id,
+                   redirect_uri,
+                   '&state=' if 'state' in request.GET else '',
+                   request.GET['state'] if 'state' in request.GET else '')
         return render_to_response('login.html', ctx)
 
-    processing_request = models.ProcessingRequest()
-    processing_request.redirect_uri = redirect_uri
-    processing_request.application = models.ClientApplication.objects.get(pk=client_id)
-    processing_request.user = models.User.objects.get(pk=request.session['user_id'])
-    processing_request.save()
+    if user is None:
+        user = models.User.objects.get(pk=request.session.get('user_id'))
 
-    return redirect('{0}?code={1}'.format(redirect_uri, processing_request.pk))
+    if 'allow_remote_login' not in request.POST:
+        ctx = {}
+        ctx.update(csrf(request))
+        ctx['appname'] = application.application_name
+        ctx['username'] = user.login
+        ctx['redirect_path'] = \
+            '?client_id={0}&redirect_uri={1}&response_type=code{2}{3}'.\
+            format(client_id,
+                   redirect_uri,
+                   '&state=' if 'state' in request.GET else '',
+                   request.GET['state'] if 'state' in request.GET else '')
+        return render_to_response('allow_login.html', ctx)
+
+    if request.POST['allow_remote_login'] == '1':
+
+        processing_request = models.ProcessingRequest()
+        processing_request.redirect_uri = redirect_uri
+        processing_request.application = models.ClientApplication.objects.get(pk=client_id)
+        processing_request.user = models.User.objects.get(pk=request.session['user_id'])
+        processing_request.save()
+
+        return redirect('{0}?code={1}{2}{3}'.format(redirect_uri, processing_request.pk,
+                        '&state=' if 'state' in request.GET else '',
+                        request.GET['state'] if 'state' in request.GET else ''))
+    else:
+        return redirect('{0}?error=1&error_decription={1}{2}{3}'.format(redirect_uri, 'login_not_allowed',
+                        '&state=' if 'state' in request.GET else '',
+                        request.GET['state'] if 'state' in request.GET else ''))
 
 
 def myapps(request):

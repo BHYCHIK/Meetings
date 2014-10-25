@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Register</title>
+<script>
+    function allow_to_login() {
+        document.getElementById("allow_remote_login").setAttribute('value', '1');
+        document.forms['allow_login_form'].submit();
+    }
+    function disallow_to_login() {
+        document.getElementById("allow_remote_login").setAttribute('value', '0');
+        document.forms['allow_login_form'].submit();
+    }
+</script>
+</head>
+<body>
+<b>{{ username }}</b>, do you allow application <b>{{ appname }}</b> to use your account?
+<form method="post" action="{{ redirect_path }}" id="allow_login_form">
+    {% csrf_token %}
+    <input type="hidden" name="allow_remote_login" value="0" id="allow_remote_login">
+</form>
+
+<a onclick="allow_to_login()" href="#allow">Allow</a><br>
+<a onclick="disallow_to_login()" href="#disallow">Disallow</a>
+
+</body>
+</html>
