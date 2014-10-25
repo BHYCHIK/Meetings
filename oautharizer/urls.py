@@ -10,5 +10,6 @@ urlpatterns = patterns('',
     url(r'^logout/', 'oautharizer.views.logout'),
     url(r'^api/authorize/', 'oautharizer.views.oauth_owner_step'),
     url(r'^api/access_token/', 'oautharizer.views.oauth_client_step'),
-    url(r'^api/myage/', 'oautharizer.views.get_my_age')
+    url(r'^api/aboutme/', 'oautharizer.views.about_me'),
+    url(r'^api/stats/', 'oautharizer.views.get_stats'),
 )

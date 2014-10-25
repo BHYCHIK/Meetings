@@ -7,61 +7,85 @@ import hashlib
 import models
 import random
 import string
+import json
 
 # Create your views here.
 
+
 @csrf_exempt
-def get_my_age(request):
+def get_stats(request):
+    reply = dict()
+    reply['total_users'] = models.User.objects.all().count()
+    reply['total_apps'] = models.ClientApplication.objects.all().count()
+    reply['active_sessions'] = models.ActiveTokens.objects.all().count()
+    return HttpResponse(json.dumps(reply))
+
+
+@csrf_exempt
+def about_me(request):
+    reply = dict()
     if 'access_token' not in request.GET:
-        raise Http404
+        reply['error_code'] = 3
+        reply['error_description'] = 'Access denied'
+        return HttpResponse(json.dumps(reply))
 
     access_obj = models.ActiveTokens.objects.filter(access_token=request.GET['access_token'])
-    if access_obj.count() != 1:
-        raise Http404
 
-    return HttpResponse(access_obj[0].user.age)
+    if access_obj.count() != 1:
+        reply['error_code'] = 3
+        reply['error_description'] = 'Access denied'
+        return HttpResponse(json.dumps(reply))
+
+    reply['id'] = access_obj[0].user.pk
+    reply['name'] = access_obj[0].user.name
+    reply['phone'] = access_obj[0].user.phone
+    reply['login'] = access_obj[0].user.login
+    reply['age'] = access_obj[0].user.age
+
+    return HttpResponse(json.dumps(reply))
+
 
 def logout(request):
     if 'user_id' in request.session:
         del request.session['user_id']
     return redirect('/oautharizer/login/')
 
+
 def _gen_rnd_str(length):
     return ''.join(random.choice(string.ascii_lowercase + string.digits) for x in xrange(length))
 
-#?client_id=CLIENT-ID&client_secret=CLIENT-SECRET
-# &grand_type=authorization_code&redirect_uri=REDIRECT-URI&code=CODE
+
 @csrf_exempt
 def oauth_client_step(request):
-    client_id = request.GET.get('client_id')
-    client_secret = request.GET.get('client_secret')
-    redirect_uri = request.GET.get('redirect_uri')
-    code = request.GET.get('code')
-    grant_type = request.GET.get('grant_type')
+    client_id = request.POST.get('client_id')
+    client_secret = request.POST.get('client_secret')
+    redirect_uri = request.POST.get('redirect_uri')
+    code = request.POST.get('code')
+    grant_type = request.POST.get('grant_type')
 
-    print client_id
-    print redirect_uri
-    print client_secret
-    print code
-    print grant_type
+    reply = dict()
 
     if (client_id is None) or (redirect_uri is None) \
             or (grant_type is None) or (grant_type != 'authorization_code') \
             or (client_secret is None) or (code is None):
-        raise Http404
-
-    print 'checked'
+        reply['error_code'] = 1
+        reply['error_description'] = 'Bad request'
+        return HttpResponse(json.dumps(reply))
 
     app = models.ClientApplication.objects.filter(application_id=client_id,
                                                   application_secret=client_secret)
     if app.count() != 1:
-        raise Http404
+        reply['error_code'] = 2
+        reply['error_description'] = 'No such application'
+        return HttpResponse(json.dumps(reply))
 
     db_req = models.ProcessingRequest.objects.filter(application=app, pk=code,
                                                      redirect_uri=redirect_uri)
 
     if db_req.count() != 1:
-        raise Http404
+        reply['error_code'] = 3
+        reply['error_description'] = 'No such code'
+        return HttpResponse(json.dumps(reply))
 
     access_token_obj = models.ActiveTokens()
     access_token_obj.access_token = _gen_rnd_str(64)
@@ -70,7 +94,10 @@ def oauth_client_step(request):
 
     db_req[0].delete()
 
-    return HttpResponse(access_token_obj.access_token)
+    reply['access_token'] = access_token_obj.access_token
+    reply['user_id'] = access_token_obj.user.id
+    return HttpResponse(json.dumps(reply))
+
 
 #?client_id=CLIENT-ID&redirect_uri=REDIRECT-URI&response_type=code
 @csrf_exempt
@@ -99,6 +126,7 @@ def oauth_owner_step(request):
     processing_request.save()
 
     return redirect('{0}?code={1}'.format(redirect_uri, processing_request.pk))
+
 
 def myapps(request):
     if 'user_id' not in request.session:
