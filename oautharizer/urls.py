@@ -13,5 +13,7 @@ urlpatterns = patterns('',
     url(r'^api/aboutme/', 'oautharizer.views.about_me'),
     url(r'^api/stats/', 'oautharizer.views.get_stats'),
     url(r'^api/place/$', 'oautharizer.views.places'),
-    url(r'^api/place/(?P<place_id>\d+)/$', 'oautharizer.views.place')
+    url(r'^api/place/(?P<place_id>\d+)/$', 'oautharizer.views.place'),
+    url(r'^api/plan/$', 'oautharizer.views.plans'),
+    url(r'^api/plan/(?P<plan_id>\d+)/$', 'oautharizer.views.plan'),
 )

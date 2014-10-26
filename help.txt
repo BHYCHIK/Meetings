@@ -14,7 +14,11 @@ curl \-F 'client_id=2' \
     -F 'redirect_uri=http://ya.ru' \
     -F 'code=6' http://127.0.0.1:8000/oautharizer/api/access_token/ -v
 
+i.remen:
 access_token = 8o4baqygaax4ksw161ox2x2d9jvvteti79fti24mn1zojjw92j9avkj0xz16mi2x
+
+BHYCHIK:
+63p7mbq4d3y0vk7d2ofu3dzvaxunvscvs7qdb885vlf9jl7zt9h0eq5zl9eddlff
 
 curl "http://127.0.0.1:8000/oautharizer/api/stats/"
 curl "http://127.0.0.1:8000/oautharizer/api/aboutme/?access_token=8o4baqygaax4ksw161ox2x2d9jvvteti79fti24mn1zojjw92j9avkj0xz16mi2x"
@@ -22,3 +26,7 @@ curl "http://127.0.0.1:8000/oautharizer/api/place/"
 curl --data '{"name": "Cronshtadt, Yakornaya square", "x_coord": 59.93328, "y_coord": 30.342791}' http://127.0.0.1:8000/oautharizer/api/place/ -v
 curl "http://127.0.0.1:8000/oautharizer/api/place/2/"
 curl -X 'DELETE' "http://127.0.0.1:8000/oautharizer/api/place/1/" -v
+curl --data '{"title": "Meet Vasya", "body": "Meet Vasya and go to University", "place_id": 3, "date": "2014-10-26 19:30:0.0"}' http://127.0.0.1:8000/oautharizer/api/plan/?access_token=8o4baqygaax4ksw161ox2x2d9jvvteti79fti24mn1zojjw92j9avkj0xz16mi2x -v
+curl http://127.0.0.1:8000/oautharizer/api/plan/?access_token=8o4baqygaax4ksw161ox2x2d9jvvteti79fti24mn1zojjw92j9avkj0xz16mi2x
+curl http://127.0.0.1:8000/oautharizer/api/plan/4/?access_token=8o4baqygaax4ksw161ox2x2d9jvvteti79fti24mn1zojjw92j9avkj0xz16mi2x
+curl -X 'DELETE' "http://127.0.0.1:8000/oautharizer/api/plan/4/?access_token=8o4baqygaax4ksw161ox2x2d9jvvteti79fti24mn1zojjw92j9avkj0xz16mi2x" -v

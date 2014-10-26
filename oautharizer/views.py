@@ -65,6 +65,79 @@ def token_checker_decorator(view_func):
     return wrapper
 
 @csrf_exempt
+@token_checker_decorator
+def plan(request, plan_id=0, access_obj=None):
+    if access_obj is None:
+        raise Http404
+    if request.method == 'GET':
+        reply_obj = None
+        try:
+            reply_obj = models.Plan.objects.get(pk=plan_id, user=access_obj[0].user)
+        except ObjectDoesNotExist:
+            raise Http404
+        reply = dict()
+        reply['id'] = reply_obj.pk
+        reply['title'] = reply_obj.title
+        reply['body'] = reply_obj.body
+        reply['date'] = unicode(reply_obj.date)
+        reply['place_id'] = reply_obj.place.pk
+        return HttpResponse(json.dumps(reply))
+    elif request.method == 'DELETE':
+        try:
+            plan_to_delete = models.Plan.objects.get(pk=plan_id, user=access_obj[0].user)
+        except ObjectDoesNotExist:
+            raise Http404
+        plan_to_delete.delete()
+        return HttpResponse()
+    else:
+        HttpResponseBadRequest('')
+
+
+@csrf_exempt
+@token_checker_decorator
+def plans(request, access_obj=None):
+    if access_obj is None:
+        raise Http404
+
+    if request.method == 'GET':
+        reply = []
+        for plan in models.Plan.objects.filter(user=access_obj[0].user):
+            plan_obj = dict()
+            plan_obj['id'] = plan.pk
+            plan_obj['title'] = plan.title
+            plan_obj['date'] = unicode(plan.date)
+            reply.append(plan_obj)
+        return HttpResponse(json.dumps(reply))
+    elif request.method == 'POST':
+        new_plan = None
+        try:
+            new_plan = json.loads(request.body)
+        except:
+            return HttpResponseBadRequest('')
+
+        if not isinstance(new_plan, dict):
+            return HttpResponseBadRequest('')
+
+        title = new_plan.get('title')
+        body = new_plan.get('body')
+        plan_date = new_plan.get('date')
+        place_id = new_plan.get('place_id')
+
+        plan = models.Plan()
+        plan.title = title
+        plan.body = body
+        plan.place = models.Place.objects.get(pk=place_id)
+        plan.date = plan_date
+        plan.user = access_obj[0].user
+
+        plan.save()
+        resp = HttpResponse(status=201)
+        resp['Location'] = 'http://127.0.0.1/oautharizer/api/plan/%s/' % plan.pk
+        return resp
+    else:
+        return HttpResponseBadRequest('')
+
+@csrf_exempt
 @json_result_decorator
 @no_cache_decorator
 def place(request, place_id=0):
