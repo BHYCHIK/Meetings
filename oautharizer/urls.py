@@ -12,4 +12,6 @@ urlpatterns = patterns('',
     url(r'^api/access_token/', 'oautharizer.views.oauth_client_step'),
     url(r'^api/aboutme/', 'oautharizer.views.about_me'),
     url(r'^api/stats/', 'oautharizer.views.get_stats'),
+    url(r'^api/place/$', 'oautharizer.views.places'),
+    url(r'^api/place/(?P<place_id>\d+)/$', 'oautharizer.views.place')
 )

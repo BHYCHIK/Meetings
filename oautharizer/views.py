@@ -1,7 +1,7 @@
 from django.shortcuts import render, render_to_response, redirect
 from django.core.context_processors import csrf
 from django.db import IntegrityError
-from django.http.response import Http404, HttpResponse
+from django.http.response import Http404, HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
 import hashlib
@@ -16,18 +16,17 @@ import time
 
 
 def json_result_decorator(view_func):
-    def wrapper(request):
-        print 'json_result_decorator'
-        result = view_func(request)
-        result['Content-Type'] = 'application/json;charset=UTF-8'
+    def wrapper(*args, **kwargs):
+        result = view_func(*args, **kwargs)
+        if result.status_code == '200':
+            result['Content-Type'] = 'application/json;charset=UTF-8'
         return result
     return wrapper
 
 
 def no_cache_decorator(view_func):
-    def wrapper(request):
-        print 'no_cache_decorator'
-        result = view_func(request)
+    def wrapper(*args, **kwargs):
+        result = view_func(*args, **kwargs)
         result['Cache-Control'] = 'no-store'
         result['Pragma'] = 'no-cache'
         return result
@@ -35,10 +34,9 @@ def no_cache_decorator(view_func):
 
 
 def token_checker_decorator(view_func):
-    print 'no_cache_decorator'
     @no_cache_decorator
     @json_result_decorator
-    def wrapper(request):
+    def wrapper(request, *args, **kwargs):
         reply = dict()
         if 'access_token' not in request.GET:
             reply['error_code'] = 3
@@ -61,9 +59,80 @@ def token_checker_decorator(view_func):
             reply['error_description'] = 'Access denied'
             return HttpResponse(json.dumps(reply))
 
-        return view_func(request, access_obj)
+        kwargs['access_obj'] = access_obj
+        return view_func(request, *args, **kwargs)
 
     return wrapper
+
+@csrf_exempt
+@json_result_decorator
+@no_cache_decorator
+def place(request, place_id=0):
+    if request.method == 'GET':
+        try:
+            reply_obj = models.Place.objects.get(pk=place_id)
+        except ObjectDoesNotExist:
+            raise Http404
+        reply = dict()
+        reply['id'] = reply_obj.pk
+        reply['name'] = reply_obj.name
+        reply['x_coord'] = reply_obj.x_coord
+        reply['y_coord'] = reply_obj.y_coord
+        return HttpResponse(json.dumps(reply))
+    elif request.method == 'DELETE':
+        try:
+            place_to_delete = models.Place.objects.get(pk=place_id)
+        except ObjectDoesNotExist:
+            raise Http404
+        place_to_delete.delete()
+        return HttpResponse()
+    else:
+        HttpResponseBadRequest('')
+
+@csrf_exempt
+@json_result_decorator
+def places(request):
+    if request.method == 'GET':
+        reply = []
+        for place in models.Place.objects.all():
+            new_place = {}
+            new_place['id'] = place.pk
+            new_place['name'] = place.name
+            reply.append(new_place)
+        return HttpResponse(json.dumps(reply))
+    elif request.method == 'POST':
+        new_place = None
+        try:
+            new_place = json.loads(request.body)
+        except:
+            return HttpResponseBadRequest('')
+
+        if not isinstance(new_place, dict):
+            return HttpResponseBadRequest('')
+
+        x_coord = new_place.get('x_coord')
+        y_coord = new_place.get('y_coord')
+        name = new_place.get('name')
+
+
+
+        if not (isinstance(x_coord, float) and isinstance(y_coord, float) and isinstance(name, unicode)):
+            return HttpResponseBadRequest('')
+
+        place = models.Place()
+        place.x_coord = x_coord
+        place.y_coord = y_coord
+        place.name = name
+
+        place.save()
+
+        resp = HttpResponse(status=201)
+        resp['Location'] = 'http://127.0.0.1/oautharizer/api/place/%s/' % place.pk
+        return resp
+    else:
+        return HttpResponseBadRequest('')
+
+
 
 @json_result_decorator
 def get_stats(request):

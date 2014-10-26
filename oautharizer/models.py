@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
+
 # Create your models here.
 class User(models.Model):
     class Meta():
@@ -12,6 +13,7 @@ class User(models.Model):
     email = models.EmailField(max_length=96, unique=True)
     name = models.CharField(max_length=128)
 
+
 class ClientApplication(models.Model):
     class Meta():
         db_table = 'client_application'
@@ -19,6 +21,7 @@ class ClientApplication(models.Model):
     application_secret = models.CharField(max_length=32, verbose_name='Секретный ключ приложентя')
     application_id = models.IntegerField(primary_key=True, verbose_name='Номер приложения')
     application_author = models.ForeignKey(User)
+
 
 class ProcessingRequest(models.Model):
     class Meta():
@@ -28,9 +31,29 @@ class ProcessingRequest(models.Model):
     creation_time = models.DateTimeField(auto_now=True)
     redirect_uri = models.URLField()
 
+
 class ActiveTokens(models.Model):
     class Meta():
         db_table = 'active_tokens'
     access_token = models.CharField(max_length=64)
     user = models.ForeignKey(User)
     creation_time = models.DateTimeField(auto_now=True)
+
+
+class Place(models.Model):
+    class Meta():
+        db_table = 'place'
+    pass
+    name = models.CharField(max_length=128)
+    x_coord = models.FloatField()
+    y_coord = models.FloatField()
+
+
+class Plan(models.Model):
+    class Meta():
+        db_table = 'plan'
+    user = models.ForeignKey(User)
+    title = models.CharField(max_length=128)
+    body = models.TextField()
+    place = models.ForeignKey(Place)
+    date = models.DateTimeField()

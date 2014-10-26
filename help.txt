@@ -18,3 +18,7 @@ access_token = 8o4baqygaax4ksw161ox2x2d9jvvteti79fti24mn1zojjw92j9avkj0xz16mi2x
 
 curl "http://127.0.0.1:8000/oautharizer/api/stats/"
 curl "http://127.0.0.1:8000/oautharizer/api/aboutme/?access_token=8o4baqygaax4ksw161ox2x2d9jvvteti79fti24mn1zojjw92j9avkj0xz16mi2x"
+curl "http://127.0.0.1:8000/oautharizer/api/place/"
+curl --data '{"name": "Cronshtadt, Yakornaya square", "x_coord": 59.93328, "y_coord": 30.342791}' http://127.0.0.1:8000/oautharizer/api/place/ -v
+curl "http://127.0.0.1:8000/oautharizer/api/place/2/"
+curl -X 'DELETE' "http://127.0.0.1:8000/oautharizer/api/place/1/" -v
