@@ -20,6 +20,7 @@ class ClientApplication(models.Model):
     application_name = models.CharField(max_length=255, verbose_name='Название приложения')
     application_secret = models.CharField(max_length=32, verbose_name='Секретный ключ приложентя')
     application_id = models.IntegerField(primary_key=True, verbose_name='Номер приложения')
+    redirect_domain = models.CharField(max_length=1024)
     application_author = models.ForeignKey(User)
 
 

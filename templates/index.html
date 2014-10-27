@@ -13,11 +13,13 @@ Your apps:
 <td>Имя приложения</td>
 <td>ID приложения</td>
 <td>Секретный код</td>
+<td>Разрешенный домен для редиректа</td>
 {% for app in apps%}
     <tr>
     <td>{{ app.application_name }}</td>
     <td>{{  app.application_id }}</td>
     <td>{{ app.application_secret }}</td>
+    <td>{{ app.redirect_domain }}</td>
     </tr>
 {% endfor %}
 </table>
@@ -25,6 +27,7 @@ Your apps:
 <form method="POST" action=".">
     {% csrf_token %}
     Имя приложения: <input type="text" name="appname"><br>
+    Разрешенный домен для редиректа: <input type="text" name="redirect_domain"><br>
     <input type="submit"><br>
 </form>
 </body>

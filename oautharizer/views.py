@@ -11,6 +11,7 @@ import string
 import json
 import config
 import time
+import urlparse
 
 # Create your views here.
 
@@ -304,6 +305,17 @@ def oauth_owner_step(request):
     client_id = request.GET.get('client_id')
     redirect_uri = request.GET.get('redirect_uri')
     response_type = request.GET.get('response_type')
+
+    application = None
+    try:
+        application = models.ClientApplication.objects.get(pk=client_id)
+    except ObjectDoesNotExist:
+        raise Http404
+
+    if application.redirect_domain != urlparse.urlparse(redirect_uri).netloc:
+        print "Malicious domain %s" % urlparse.urlparse(redirect_uri).netloc
+        raise Http404
+
     user = None
     if (client_id is None) or (redirect_uri is None) or (response_type is None) or (response_type != 'code'):
         raise Http404
@@ -314,12 +326,6 @@ def oauth_owner_step(request):
             return render_to_response('loginerr.html')
         user = user[0]
         request.session['user_id'] = user.pk
-
-    application = None
-    try:
-        application = models.ClientApplication.objects.get(pk=client_id)
-    except ObjectDoesNotExist:
-        raise Http404
 
     if 'user_id' not in request.session:
         ctx = {}
@@ -373,6 +379,7 @@ def myapps(request):
         new_app = models.ClientApplication()
         new_app.application_author = user
         new_app.application_name = request.POST.get('appname')
+        new_app.redirect_domain = request.POST.get('redirect_domain')
         new_app.application_secret = _gen_rnd_str(32)
         new_app.save()
     ctx = dict()
