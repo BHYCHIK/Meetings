@@ -34,7 +34,7 @@ curl "http://127.0.0.1:8000/oautharizer/api/place/"
 curl --data '{"name": "Cronshtadt, Yakornaya square", "x_coord": 59.93328, "y_coord": 30.342791}' http://127.0.0.1:8000/oautharizer/api/place/ -v
 curl "http://127.0.0.1:8000/oautharizer/api/place/2/"
 curl -X 'DELETE' "http://127.0.0.1:8000/oautharizer/api/place/1/" -v
-curl --data '{"title": "Meet Vasya", "body": "Meet Vasya and go to University", "place_id": 3, "date": "2014-10-26 19:30:0.0"}' http://127.0.0.1:8000/oautharizer/api/plan/ -v --header "Authorization: Bearer um291p4dze2nf8amp08g2wjoomgg0vs95kq5z8xxjkw8tkxreuje40h525p78c0d"
+curl --data '{"title": "Meet Vasya", "body": "Meet Vasya and go to University", "place_id": 3, "date": "2014-10-26 19:30:0.0"}' http://127.0.0.1:8000/oautharizer/api/plan/ -v --header "Authorization: Bearer k5gor78ozpx4dijvmnvccqetiz0e18vwve8cszpun8cclkvioexksk5ldv80uf8s"
 curl http://127.0.0.1:8000/oautharizer/api/plan/ --header "Authorization: Bearer k5gor78ozpx4dijvmnvccqetiz0e18vwve8cszpun8cclkvioexksk5ldv80uf8s"
 curl http://127.0.0.1:8000/oautharizer/api/plan/4/ --header "Authorization: Bearer k5gor78ozpx4dijvmnvccqetiz0e18vwve8cszpun8cclkvioexksk5ldv80uf8s"
 curl -X 'DELETE' "http://127.0.0.1:8000/oautharizer/api/plan/4/" -v --header "Authorization: Bearer k5gor78ozpx4dijvmnvccqetiz0e18vwve8cszpun8cclkvioexksk5ldv80uf8s"

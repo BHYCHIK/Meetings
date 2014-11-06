@@ -147,7 +147,7 @@ def plans(request, access_obj=None):
 
         plan.save()
         resp = HttpResponse(status=201)
-        resp['Location'] = 'http://127.0.0.1/oautharizer/api/plan/%s/' % plan.pk
+        resp['Location'] = 'http://127.0.0.1:8000/oautharizer/api/plan/%s/' % plan.pk
         return resp
     else:
         return HttpResponseBadRequest('')
@@ -215,7 +215,7 @@ def places(request):
         place.save()
 
         resp = HttpResponse(status=201)
-        resp['Location'] = 'http://127.0.0.1/oautharizer/api/place/%s/' % place.pk
+        resp['Location'] = 'http://127.0.0.1:8000/oautharizer/api/place/%s/' % place.pk
         return resp
     else:
         return HttpResponseBadRequest('')
