@@ -1,7 +1,7 @@
 from django.shortcuts import render, render_to_response, redirect
 from django.core.context_processors import csrf
 from django.db import IntegrityError
-from django.http.response import Http404, HttpResponse, HttpResponseBadRequest
+from django.http.response import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
 import hashlib
@@ -39,26 +39,37 @@ def token_checker_decorator(view_func):
     @json_result_decorator
     def wrapper(request, *args, **kwargs):
         reply = dict()
-        if 'access_token' not in request.GET:
-            reply['error_code'] = 3
-            reply['error_description'] = 'Access denied'
-            return HttpResponse(json.dumps(reply))
 
-        access_obj = models.ActiveTokens.objects.filter(access_token=request.GET['access_token'])
+        if 'HTTP_AUTHORIZATION' not in request.environ:
+            result = HttpResponseNotAllowed('')
+            result['WWW-Authenticate'] = 'Bearer realm="example", error="invalid_token",' \
+                                         'error_description="The access token expired"'
+            return result
+
+        auth_params = request.environ['HTTP_AUTHORIZATION'].split(' ')
+        if (len(auth_params) != 2) or (auth_params[0] != 'Bearer'):
+            result = HttpResponseNotAllowed('')
+            result['WWW-Authenticate'] = 'Bearer realm="example", error="invalid_token",' \
+                                         'error_description="The access token expired"'
+            return result
+
+        access_obj = models.ActiveTokens.objects.filter(access_token=auth_params[1])
 
         if access_obj.count() != 1:
-            reply['error_code'] = 3
-            reply['error_description'] = 'Access denied'
-            return HttpResponse(json.dumps(reply))
+            result = HttpResponseNotAllowed('')
+            result['WWW-Authenticate'] = 'Bearer realm="example", error="invalid_token",' \
+                                         'error_description="The access token expired"'
+            return result
 
         dif_time = int(time.time()) - time.mktime(access_obj[0].creation_time.timetuple())
         if dif_time < 0:
             print "STRANGE THING HAPPEND"
             raise Http404
         if dif_time > config.token_expire_time:
-            reply['error_code'] = 3
-            reply['error_description'] = 'Access denied'
-            return HttpResponse(json.dumps(reply))
+            result = HttpResponseNotAllowed('')
+            result['WWW-Authenticate'] = 'Bearer realm="example", error="invalid_token",' \
+                                         'error_description="The access token expired"'
+            return result
 
         kwargs['access_obj'] = access_obj
         return view_func(request, *args, **kwargs)
@@ -127,7 +138,10 @@ def plans(request, access_obj=None):
         plan = models.Plan()
         plan.title = title
         plan.body = body
-        plan.place = models.Place.objects.get(pk=place_id)
+        try:
+            plan.place = models.Place.objects.get(pk=place_id)
+        except ObjectDoesNotExist:
+            raise Http404
         plan.date = plan_date
         plan.user = access_obj[0].user
 
