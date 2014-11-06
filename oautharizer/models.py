@@ -40,6 +40,13 @@ class ActiveTokens(models.Model):
     user = models.ForeignKey(User)
     creation_time = models.DateTimeField(auto_now=True)
 
+class RefreshTokens(models.Model):
+    class Meta():
+        db_table = 'refresh_tokens'
+    refresh_token = models.CharField(max_length=64)
+    user = models.ForeignKey(User)
+    application = models.ForeignKey(ClientApplication)
+
 
 class Place(models.Model):
     class Meta():

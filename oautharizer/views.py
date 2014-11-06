@@ -262,12 +262,20 @@ def oauth_client_step(request):
     redirect_uri = request.POST.get('redirect_uri')
     code = request.POST.get('code')
     grant_type = request.POST.get('grant_type')
+    refresh_token = request.POST.get('refresh_token')
 
     reply = dict()
 
-    if (client_id is None) or (redirect_uri is None) \
-            or (grant_type is None) or (grant_type != 'authorization_code') \
-            or (client_secret is None) or (code is None):
+    if (client_id is None) or \
+            (grant_type is None) \
+            or ((grant_type != 'refresh_token') and (grant_type != 'authorization_code')) \
+            or (client_secret is None):
+        reply['error_code'] = 1
+        reply['error_description'] = 'Bad request'
+        return HttpResponse(json.dumps(reply))
+
+    if (((redirect_uri is None) or (code is None)) and (grant_type == 'authorization_code')) or \
+            ((refresh_token is None) and (grant_type == 'refresh_token')):
         reply['error_code'] = 1
         reply['error_description'] = 'Bad request'
         return HttpResponse(json.dumps(reply))
@@ -279,37 +287,62 @@ def oauth_client_step(request):
         reply['error_description'] = 'No such application'
         return HttpResponse(json.dumps(reply))
 
-    db_req = models.ProcessingRequest.objects.filter(application=app, pk=code,
-                                                     redirect_uri=redirect_uri)
+    db_req = None
+    refresh_token_obj = None
+    if (grant_type == 'authorization_code') and (code is not None):
+        db_req = models.ProcessingRequest.objects.filter(application=app, pk=code,
+                                                         redirect_uri=redirect_uri)
 
-    if db_req.count() != 1:
-        reply['error_code'] = 3
-        reply['error_description'] = 'No such code'
-        return HttpResponse(json.dumps(reply))
+        if db_req.count() != 1:
+            reply['error_code'] = 3
+            reply['error_description'] = 'No such code'
+            return HttpResponse(json.dumps(reply))
 
-    db_req = db_req[0]
+        db_req = db_req[0]
 
-    dif_time = int(time.time()) - time.mktime(db_req.creation_time.timetuple())
-    if dif_time < 0:
-        print "STRANGE THING HAPPEND"
-        raise Http404
+        dif_time = int(time.time()) - time.mktime(db_req.creation_time.timetuple())
+        if dif_time < 0:
+            print "STRANGE THING HAPPEND"
+            raise Http404
 
-    if dif_time > config.code_valid_time:
-        reply['error_code'] = 3
-        reply['error_description'] = 'No such code'
-        return HttpResponse(json.dumps(reply))
+        if dif_time > config.code_valid_time:
+            reply['error_code'] = 3
+            reply['error_description'] = 'No such code'
+            return HttpResponse(json.dumps(reply))
+    elif (grant_type == 'refresh_token') and (refresh_token is not None):
+        refresh_token_obj = models.RefreshTokens.objects.filter(application=app,
+                                                                refresh_token=refresh_token)
+
+        if refresh_token_obj.count() != 1:
+            reply['error_code'] = 4
+            reply['error_description'] = 'Bad refresh token'
+            return HttpResponse(json.dumps(reply))
+        refresh_token_obj = refresh_token_obj[0]
 
     access_token_obj = models.ActiveTokens()
     access_token_obj.access_token = _gen_rnd_str(64)
-    access_token_obj.user = db_req.user
+    if db_req is not None:
+        access_token_obj.user = db_req.user
+    elif refresh_token_obj is not None:
+        access_token_obj.user = refresh_token_obj.user
     access_token_obj.save()
-
-    db_req.delete()
 
     reply['access_token'] = access_token_obj.access_token
     reply['token_type'] = 'bearer'
     reply['expires_in'] = config.token_expire_time
     reply['user_id'] = access_token_obj.user.id
+
+    if refresh_token_obj is None:
+        refresh_token_obj = models.RefreshTokens()
+        refresh_token_obj.refresh_token = _gen_rnd_str(64)
+        reply['refresh_token'] = refresh_token_obj.refresh_token
+        refresh_token_obj.user = db_req.user
+        refresh_token_obj.application = db_req.application
+        refresh_token_obj.save()
+        db_req.delete()
+    else:
+        reply['refresh_token'] = refresh_token
+
     response_object = HttpResponse(json.dumps(reply))
     return response_object
 

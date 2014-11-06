@@ -2,31 +2,39 @@ login: i.remen
 pass: 123123q
 
 Имя приложения	ID приложения	Секретный код
-MySecondApp	2	aawah8qtm19p1rrahi550dhj31305dza
+greed	2	cpd4wk3uo0ddeiuccrtvf453xakfgclv
 
 LOGIN PROCESS:
 first step:
 http://127.0.0.1:8000/oautharizer/api/authorize/?client_id=2&redirect_uri=http://ya.ru&response_type=code
 second step
 curl \-F 'client_id=2' \
-    -F 'client_secret=3kt30w35mqhk57yark02u9ao24x4bcf3' \
+    -F 'client_secret=cpd4wk3uo0ddeiuccrtvf453xakfgclv' \
     -F 'grant_type=authorization_code' \
     -F 'redirect_uri=http://ya.ru' \
-    -F 'code=6' http://127.0.0.1:8000/oautharizer/api/access_token/ -v
+    -F 'code=1' http://127.0.0.1:8000/oautharizer/api/access_token/ -v
+
+curl -F 'client_id=2' \
+    -F 'client_secret=cpd4wk3uo0ddeiuccrtvf453xakfgclv' \
+    -F 'grant_type=refresh_token' \
+    -F 'refresh_token=kimaizpn8f02zy34gcyy18s68pzpvaoyujc0gxb8gj92qcggu3e9teewtjm3m89s' \
+    http://127.0.0.1:8000/oautharizer/api/access_token/ -v
 
 i.remen:
-access_token = um291p4dze2nf8amp08g2wjoomgg0vs95kq5z8xxjkw8tkxreuje40h525p78c0d
+access_token = k5gor78ozpx4dijvmnvccqetiz0e18vwve8cszpun8cclkvioexksk5ldv80uf8s
+refresh_token = kimaizpn8f02zy34gcyy18s68pzpvaoyujc0gxb8gj92qcggu3e9teewtjm3m89s
 
 BHYCHIK:
-63p7mbq4d3y0vk7d2ofu3dzvaxunvscvs7qdb885vlf9jl7zt9h0eq5zl9eddlff
+access_token=repzn06s5mpa64z1hmr4v5v5ffzg1cgu4n1l4kipbd1bhv75kmlaxq3dlahmimkd
+refresh_token=0nvv1z1b51v2bb4lsowgdsrle510tqwqv7kcqeosdndo0hmt0jghhbbak51lutjn
 
-curl "http://127.0.0.1:8000/oautharizer/api/stats/"
-curl "http://127.0.0.1:8000/oautharizer/api/aboutme/" -v --header "Authorization: Bearer um291p4dze2nf8amp08g2wjoomgg0vs95kq5z8xxjkw8tkxreuje40h525p78c0d"
+curl "http://127.0.0.1:8000/oautharizer/api/stats/" -v
+curl "http://127.0.0.1:8000/oautharizer/api/aboutme/" -v --header "Authorization: Bearer k5gor78ozpx4dijvmnvccqetiz0e18vwve8cszpun8cclkvioexksk5ldv80uf8s"
 curl "http://127.0.0.1:8000/oautharizer/api/place/"
 curl --data '{"name": "Cronshtadt, Yakornaya square", "x_coord": 59.93328, "y_coord": 30.342791}' http://127.0.0.1:8000/oautharizer/api/place/ -v
 curl "http://127.0.0.1:8000/oautharizer/api/place/2/"
 curl -X 'DELETE' "http://127.0.0.1:8000/oautharizer/api/place/1/" -v
 curl --data '{"title": "Meet Vasya", "body": "Meet Vasya and go to University", "place_id": 3, "date": "2014-10-26 19:30:0.0"}' http://127.0.0.1:8000/oautharizer/api/plan/ -v --header "Authorization: Bearer um291p4dze2nf8amp08g2wjoomgg0vs95kq5z8xxjkw8tkxreuje40h525p78c0d"
-curl http://127.0.0.1:8000/oautharizer/api/plan/ --header "Authorization: Bearer um291p4dze2nf8amp08g2wjoomgg0vs95kq5z8xxjkw8tkxreuje40h525p78c0d"
-curl http://127.0.0.1:8000/oautharizer/api/plan/4/ --header "Authorization: Bearer um291p4dze2nf8amp08g2wjoomgg0vs95kq5z8xxjkw8tkxreuje40h525p78c0d"
-curl -X 'DELETE' "http://127.0.0.1:8000/oautharizer/api/plan/4/" -v --header "Authorization: Bearer um291p4dze2nf8amp08g2wjoomgg0vs95kq5z8xxjkw8tkxreuje40h525p78c0d"
+curl http://127.0.0.1:8000/oautharizer/api/plan/ --header "Authorization: Bearer k5gor78ozpx4dijvmnvccqetiz0e18vwve8cszpun8cclkvioexksk5ldv80uf8s"
+curl http://127.0.0.1:8000/oautharizer/api/plan/4/ --header "Authorization: Bearer k5gor78ozpx4dijvmnvccqetiz0e18vwve8cszpun8cclkvioexksk5ldv80uf8s"
+curl -X 'DELETE' "http://127.0.0.1:8000/oautharizer/api/plan/4/" -v --header "Authorization: Bearer k5gor78ozpx4dijvmnvccqetiz0e18vwve8cszpun8cclkvioexksk5ldv80uf8s"
